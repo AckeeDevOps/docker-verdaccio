@@ -21,6 +21,8 @@ RUN git clone https://github.com/bufferoverflow/verdaccio-gitlab.git && \
     yarn cache clean && \
     yarn install --production=true --pure-lockfile
 
+RUN npm install -g verdaccio-gitlab
+
 FROM verdaccio/verdaccio:4.6.2
 
 LABEL maintainer="https://github.com/verdaccio/verdaccio"
