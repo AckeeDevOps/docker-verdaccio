@@ -35,6 +35,6 @@ ENV PATH=$VERDACCIO_APPDIR/docker-bin:$PATH \
 
 WORKDIR $VERDACCIO_APPDIR
 
-COPY --from=builder /opt/verdaccio-build/verdaccio-gitlab/uild /verdaccio/plugins/verdaccio-gitlab
+COPY --from=builder /opt/verdaccio-build/verdaccio-gitlab/build /verdaccio/plugins/verdaccio-gitlab
 
 USER $VERDACCIO_USER_UID
