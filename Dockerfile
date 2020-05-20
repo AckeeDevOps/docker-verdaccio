@@ -12,12 +12,14 @@ RUN apk --no-cache add openssl ca-certificates wget && \
     apk add glibc-2.25-r0.apk
 
 WORKDIR /opt/verdaccio-build
-COPY . .
 
 RUN git clone https://github.com/bufferoverflow/verdaccio-gitlab.git && \
     cd verdaccio-gitlab && \
-    yarn install && \
-    yarn start
+    yarn config set registry $VERDACCIO_BUILD_REGISTRY && \
+    yarn install --production=false && \
+    yarn code:docker-build && \
+    yarn cache clean && \
+    yarn install --production=true --pure-lockfile
 
 FROM verdaccio/verdaccio:4.6.2
 
@@ -33,6 +35,6 @@ ENV PATH=$VERDACCIO_APPDIR/docker-bin:$PATH \
 
 WORKDIR $VERDACCIO_APPDIR
 
-COPY --from=builder /opt/verdaccio-build .
+COPY --from=builder /opt/verdaccio-build/verdaccio-gitlab/uild /verdaccio/plugins/verdaccio-gitlab
 
 USER $VERDACCIO_USER_UID
