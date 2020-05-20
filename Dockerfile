@@ -3,6 +3,8 @@ FROM verdaccio/verdaccio:4.6.2 as builder
 ENV NODE_ENV=production \
     VERDACCIO_BUILD_REGISTRY=https://registry.verdaccio.org
 
+USER root
+
 RUN apk --no-cache add openssl ca-certificates wget && \
     apk --no-cache add g++ gcc libgcc libstdc++ linux-headers git make python && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
@@ -32,3 +34,5 @@ ENV PATH=$VERDACCIO_APPDIR/docker-bin:$PATH \
 WORKDIR $VERDACCIO_APPDIR
 
 COPY --from=builder /opt/verdaccio-build .
+
+USER $VERDACCIO_USER_UID
