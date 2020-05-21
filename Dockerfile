@@ -21,8 +21,6 @@ RUN git clone https://github.com/bufferoverflow/verdaccio-gitlab.git && \
     yarn cache clean && \
     yarn install --production=true --pure-lockfile
 
-RUN npm install -g verdaccio-gitlab
-
 FROM verdaccio/verdaccio:4.6.2
 
 LABEL maintainer="https://github.com/verdaccio/verdaccio"
@@ -36,6 +34,8 @@ ENV PATH=$VERDACCIO_APPDIR/docker-bin:$PATH \
     HOME=$VERDACCIO_APPDIR
 
 WORKDIR $VERDACCIO_APPDIR
+
+RUN npm install -g verdaccio-gitlab
 
 COPY --from=builder /opt/verdaccio-build/verdaccio-gitlab/build /verdaccio/plugins/verdaccio-gitlab
 
