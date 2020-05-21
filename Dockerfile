@@ -1,42 +1,34 @@
-FROM verdaccio/verdaccio:4.6.2 as builder
+FROM node:12.16.3-alpine3.11 as builder
+
+WORKDIR /opt/verdaccio-gitlab-build
+
+RUN apk --no-cache add git openssh
+RUN git clone https://github.com/bufferoverflow/verdaccio-gitlab.git .
 
 ENV NODE_ENV=production \
-    VERDACCIO_BUILD_REGISTRY=https://registry.verdaccio.org
+    VERDACCIO_BUILD_REGISTRY=https://registry.npmjs.org/
 
-USER root
-
-RUN apk --no-cache add openssl ca-certificates wget && \
-    apk --no-cache add g++ gcc libgcc libstdc++ linux-headers git make python && \
-    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
-    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk && \
-    apk add glibc-2.25-r0.apk
-
-WORKDIR /opt/verdaccio-build
-
-RUN git clone https://github.com/bufferoverflow/verdaccio-gitlab.git && \
-    cd verdaccio-gitlab && \
-    yarn config set registry $VERDACCIO_BUILD_REGISTRY && \
+RUN yarn config set registry $VERDACCIO_BUILD_REGISTRY && \
     yarn install --production=false && \
     yarn code:docker-build && \
     yarn cache clean && \
     yarn install --production=true --pure-lockfile
 
+
+
 FROM verdaccio/verdaccio:4.6.2
+LABEL maintainer="https://github.com/bufferoverflow/verdaccio-gitlab"
 
-LABEL maintainer="https://github.com/verdaccio/verdaccio"
+# Go back to root to be able to install the plugin
+USER root
 
-ENV VERDACCIO_APPDIR=/opt/verdaccio \
-    VERDACCIO_USER_NAME=verdaccio \
-    VERDACCIO_USER_UID=10001 \
-    VERDACCIO_PORT=4873 \
-    VERDACCIO_PROTOCOL=http
-ENV PATH=$VERDACCIO_APPDIR/docker-bin:$PATH \
-    HOME=$VERDACCIO_APPDIR
+COPY --from=builder /opt/verdaccio-gitlab-build/build /opt/verdaccio-gitlab/build
+COPY --from=builder /opt/verdaccio-gitlab-build/package.json /opt/verdaccio-gitlab/package.json
+COPY --from=builder /opt/verdaccio-gitlab-build/node_modules /opt/verdaccio-gitlab/node_modules
 
+# Inherited from parent image
 WORKDIR $VERDACCIO_APPDIR
+RUN ln -s /opt/verdaccio-gitlab/build /verdaccio/plugins/verdaccio-gitlab
 
-RUN npm install -g verdaccio-gitlab
-
-COPY --from=builder /opt/verdaccio-build/verdaccio-gitlab/build /verdaccio/plugins/verdaccio-gitlab
-
+# Inherited from parent image
 USER $VERDACCIO_USER_UID
